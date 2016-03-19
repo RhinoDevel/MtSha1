@@ -1,4 +1,4 @@
 # MtSha1
-SHA1 hash generator written in C.
+Create SHA1 hashes from files. Written in C.
 
 Includes sample code (see main.c).
