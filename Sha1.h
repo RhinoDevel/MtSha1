@@ -31,6 +31,8 @@ uint8_t* Sha1_create_from_file(FILE * const inFilePtr);
 
 char* Sha1_create_string_from_file(FILE * const inFilePtr);
 
+char* Sha1_create_string_from_path(char const * const inPathPtr);
+
 #ifdef	__cplusplus
 }
 #endif //__cplusplus

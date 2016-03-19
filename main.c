@@ -17,22 +17,11 @@ int main(int const argc, char * const argv[])
 {
     if(argc>1)
     {
-        FILE* filePtr = fopen(argv[1], "rb");
+        char const * const str = Sha1_create_string_from_path(argv[1]);
 
-        if(filePtr!=NULL)
+        if(str!=NULL)
         {
-            unsigned char * const sha1Ptr = Sha1_create_from_file(filePtr);
-
-            fclose(filePtr);
-            filePtr = NULL;
-
-            if(sha1Ptr!=NULL)
-            {
-                Sha1_print(sha1Ptr);
-                printf("\n");
-            }
-
-            free(sha1Ptr);
+            printf("%s\n", str);
         }
     }
 

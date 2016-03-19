@@ -299,6 +299,26 @@ char* Sha1_create_string_from_file(FILE * const inFilePtr)
     return retVal;
 }
 
+char* Sha1_create_string_from_path(char const * const inPathPtr)
+{
+    char* retVal = NULL;
+
+    if(inPathPtr!=NULL)
+    {
+        FILE* filePtr = fopen(inPathPtr, "rb");
+
+        if(filePtr!=NULL)
+        {
+            retVal = Sha1_create_string_from_file(filePtr);
+
+            fclose(filePtr);
+            filePtr = NULL;
+        }
+    }
+
+    return retVal;
+}
+
 /* WIKIPEDIA:
 
 Note 1: All variables are unsigned 32-bit quantities and wrap modulo 232 when calculating, except for
