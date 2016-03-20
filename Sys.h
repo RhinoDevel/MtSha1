@@ -12,6 +12,8 @@ extern "C" {
 
 bool Sys_is_big_endian();
 
+char* Sys_get_time_str(bool const inDate, bool const inSeconds);
+
 #ifdef	__cplusplus
 }
 #endif //__cplusplus
