@@ -60,7 +60,6 @@ static bool FillBuf()
     static uint8_t* sBytePtr = NULL;
 
     assert(_fileCachePtr!=NULL);
-    assert(_fileCachePos<_fileCacheLen);
     assert(_endOfData==false);
 
     bool retVal = true; // TRUE by default.
