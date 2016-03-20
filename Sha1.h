@@ -20,6 +20,8 @@ char* Sha1_create_string(uint8_t const * const inHashPtr);
  */
 void Sha1_print(uint8_t const * const inHashPtr);
 
+void Sha1_clear_cache();
+
 /** SHA1.
  *
  * - Returns NULL on error.

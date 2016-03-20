@@ -13,9 +13,33 @@
 #include "Sys.h"
 #include "macros.h"
 
+static bool const _fileCacheClearAfterUsage = true; // You need to manually delete cache after usage wit Sha1_clear_cache(), if this is set to false!
+static size_t const _fileCacheSize = 16*1024*1024;
+
 static FILE* _filePtr = NULL; // To be set by Sha1_create_from_file() and used in FillBuf().
+static char* _fileCachePtr = NULL;
+static size_t _fileCachePos = SIZE_MAX;                  //
+static size_t _fileCacheLen = SIZE_MAX/*_fileCachePos*/; // Important to be equal (see implementation)!
 static uint8_t _loopBuf[64]; // To be set by FillBuf() multiple times and used in Sha1_create_from_file().
 static bool _endOfData = false; // To be set in FillBuf() and reacted on in Sha1_create_from_file().
+
+static size_t FillCache()
+{
+    bool retVal = false;
+
+    assert(_filePtr!=NULL);
+    assert(_fileCachePtr!=NULL);
+    assert(_endOfData==false);
+    assert(_fileCacheSize%64==0); // [so cache will never be empty during a FillBus() run]
+
+    _fileCacheLen = fread(_fileCachePtr, sizeof *_fileCachePtr, _fileCacheSize, _filePtr);
+    _fileCachePos = 0;
+    if(ferror(_filePtr)==0)
+    {
+        retVal = true;
+    }
+    return retVal;
+}
 
 /** Fill 64 byte long buffer for one iteration of SHA1 creation algorithm.
 *
@@ -35,18 +59,17 @@ static bool FillBuf()
         sByteCount = 0;
     static uint8_t* sBytePtr = NULL;
 
-    assert(_filePtr!=NULL);
+    assert(_fileCachePtr!=NULL);
+    assert(_fileCachePos<_fileCacheLen);
     assert(_endOfData==false);
 
     bool retVal = true; // TRUE by default.
 
     for(size_t bytesRead = 0;bytesRead<64;++bytesRead)
     {
-        if(sBytePtr==NULL) // => Still reading bytes from file.
+        if(sBytePtr==NULL) // => Still reading bytes from cache.
         {
-            int const buf = fgetc(_filePtr);
-
-            if(buf==EOF) // => Either end of file reached or an error occurred.
+            if(_fileCachePos==_fileCacheLen) // => Either end of file reached (cache size must be a multiple of 64 to be sure of that) or an error occurred.
             {
                 size_t congruent448ByteCount = 0;
 
@@ -97,9 +120,11 @@ static bool FillBuf()
 
                 _loopBuf[bytesRead] = sBytePtr[sPos]; // Read first byte from buffer.
             }
-            else // => Byte read from file:
+            else // => Byte read from cache:
             {
-                _loopBuf[bytesRead] = (uint8_t)buf;
+                _loopBuf[bytesRead] = _fileCachePtr[_fileCachePos];
+
+                ++_fileCachePos;
             }
         }
         else // => Already reading bytes from buffer.
@@ -158,6 +183,12 @@ void Sha1_print(uint8_t const * const inHashPtr)
     free(str);
 }
 
+void Sha1_clear_cache()
+{
+    free(_fileCachePtr);
+    _fileCachePtr = NULL;
+}
+
 uint8_t* Sha1_create_from_file(FILE * const inFilePtr)
 {
     uint8_t *retVal = NULL,
@@ -185,11 +216,14 @@ uint8_t* Sha1_create_from_file(FILE * const inFilePtr)
         }
         _filePtr = inFilePtr;
 
-        hashPtr = (uint8_t*)malloc(160/8);
-        if(hashPtr==NULL)
+        if(_fileCachePtr==NULL)
         {
-            break;
+            _fileCachePtr = malloc(_fileCacheSize*(sizeof *_fileCachePtr));
+            assert(_fileCachePtr!=NULL);
         }
+
+        hashPtr = (uint8_t*)malloc(160/8);
+        assert(hashPtr!=NULL);
 
         do
         {
@@ -201,7 +235,16 @@ uint8_t* Sha1_create_from_file(FILE * const inFilePtr)
                 d = h3,
                 e = h4;
 
-            if(!FillBuf()) // Dynamically fills _loopBuf with next 64 byte from file OR from buffer (after EOF was reached). Sets _endOfData.
+            if(_fileCachePos==_fileCacheLen)
+            {
+                if(!FillCache()) // (sets cache position and length)
+                {
+                    errOcc = true;
+                    break;
+                }
+            }
+
+            if(!FillBuf()) // Dynamically fills _loopBuf with next 64 byte from cache OR from buffer (after EOF was reached). Sets _endOfData.
             {
                 errOcc = true;
                 break;
@@ -281,6 +324,12 @@ uint8_t* Sha1_create_from_file(FILE * const inFilePtr)
 
     _filePtr = NULL;
     _endOfData = false;
+    if(_fileCacheClearAfterUsage)
+    {
+        Sha1_clear_cache();
+    }
+    _fileCachePos = SIZE_MAX;
+    _fileCacheLen = _fileCachePos;
     free(hashPtr);
     return retVal;
 }
