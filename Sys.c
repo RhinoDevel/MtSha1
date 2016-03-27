@@ -3,9 +3,11 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
 #include "Sys.h"
 
 bool Sys_is_big_endian()
@@ -58,6 +60,51 @@ char* Sys_get_time_str(bool const inDate, bool const inSeconds)
     if(inSeconds)
     {
         snprintf(retVal+pos, byteLen-pos, ":%02d", l->tm_sec);
+    }
+
+    return retVal;
+}
+
+/** Original source: http://stackoverflow.com/questions/7831755/what-is-the-simplest-way-of-getting-user-input-in-c
+ */
+char* Sys_get_stdin()
+{
+    size_t const granularity = 20;
+    size_t len = granularity;
+    char* retVal = malloc(len*(sizeof *retVal));
+    int i = 0;
+    assert(retVal!=NULL);
+
+    while(true)
+    {
+        int const c = getchar();
+
+        // At terminating zero at end of string:
+        //
+        if(c=='\n')
+        {
+            retVal[i] = '\0';
+            break;
+        }
+
+        retVal[i] = c;
+
+        // Expand buffer, if full:
+        //
+        if(i==(len-1))
+        {
+            char* buf = retVal;
+            size_t const bufLen = len;
+
+            len = len+granularity;
+            retVal = malloc(len*(sizeof *retVal));
+            assert(retVal!=NULL);
+
+            strncpy(retVal, buf, bufLen);
+            free(buf);
+        }
+
+        ++i;
     }
 
     return retVal;
