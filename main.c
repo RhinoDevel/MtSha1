@@ -17,11 +17,12 @@ int main(int const argc, char * const argv[])
 {
     if(argc>1)
     {
-        printf("%s - Starting algorithm..\n", Sys_get_time_str(true, true));
+		Sys_log_line(true, true, "Starting algorithm..");
 
         char const * const str = Sha1_create_string_from_path(argv[1]);
 
-        printf("%s - Algorithm done.\n\n", Sys_get_time_str(true, true));
+        Sys_log_line(true, true, "Algorithm done.");
+		printf("\n");
 
         if(str!=NULL)
         {

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <time.h>
 #include <ctype.h>
 #include "Sys.h"
@@ -23,7 +24,7 @@ bool Sys_is_big_endian()
     return u.uC[0]==1;
 }
 
-char* Sys_get_time_str(bool const inDate, bool const inSeconds)
+char* Sys_create_time_str(bool const inDate, bool const inSeconds)
 {
     char* retVal = NULL;
     time_t t = time(NULL);
@@ -102,4 +103,23 @@ char* Sys_get_stdin()
     }
 
     return retVal;
+}
+
+/** Original source for variable arguments: http://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf/1056424#1056424
+ */
+void Sys_log_line(bool const inDate, bool const inSeconds, char const * const inStr, ...)
+{
+    va_list argPtr;
+    char * const timePtr = Sys_create_time_str(inDate, inSeconds);
+
+    printf(timePtr);
+    printf(" - ");
+
+    assert(inStr!=NULL);
+
+    va_start(argPtr, inStr);
+    vprintf(inStr, argPtr);
+    va_end(argPtr);
+
+    printf("\n");
 }
