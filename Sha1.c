@@ -253,52 +253,51 @@ uint8_t* Sha1_create_from_file(FILE * const inFilePtr)
             {
                 w[i] = MT_BSWAP32(((uint32_t*)_loopBuf)[i]);
             }
-
-            for(i = 16;i<80;++i)
+            for(;i<80;++i)
             {
                 w[i] = (w[i-3]^w[i-8]^w[i-14]^w[i-16]);
                 w[i] = MT_ROL32(w[i], 1);
             }
 
-            for(i = 0;i<80;++i)
+            for(i = 0;i<20;++i)
             {
-                uint32_t f = 0,
-                    k = 0,
-                    temp = 0;
+                uint32_t const temp = ((b&c)|((~b)&d))+e;
 
-                if(i<20)
-                {
-                    f = (b&c)|((~b)&d);
-                    k = 0x5A827999;
-                }
-                else
-                {
-                    if(i<40)
-                    {
-                        f = b^c^d;
-                        k = 0x6ED9EBA1;
-                    }
-                    else
-                    {
-                        if(i<60)
-                        {
-                            f = (b&c)|(b&d)|(c&d);
-                            k = 0x8F1BBCDC;
-                        }
-                        else
-                        {
-                            f = b^c^d;
-                            k = 0xCA62C1D6;
-                        }
-                    }
-                }
-
-                temp = MT_ROL32(a, 5)+f+e+k+w[i];
                 e = d;
                 d = c;
                 c = MT_ROL32(b, 30);
                 b = a;
-                a = temp;
+                a = MT_ROL32(a, 5)+0x5A827999+w[i]+temp;
+            }
+            for(;i<40;++i)
+            {
+                uint32_t const temp = (b^c^d)+e;
+
+                e = d;
+                d = c;
+                c = MT_ROL32(b, 30);
+                b = a;
+                a = MT_ROL32(a, 5)+0x6ED9EBA1+w[i]+temp;
+            }
+            for(;i<60;++i)
+            {
+                uint32_t const temp = ((b&c)|(b&d)|(c&d))+e;
+
+                e = d;
+                d = c;
+                c = MT_ROL32(b, 30);
+                b = a;
+                a = MT_ROL32(a, 5)+0x8F1BBCDC+w[i]+temp;
+            }
+            for(;i<80;++i)
+            {
+                uint32_t const temp = (b^c^d)+e;
+
+                e = d;
+                d = c;
+                c = MT_ROL32(b, 30);
+                b = a;
+                a = MT_ROL32(a, 5)+0xCA62C1D6+w[i]+temp;
             }
 
             h0 += a;
