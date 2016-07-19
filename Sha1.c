@@ -12,18 +12,19 @@
 
 #include "Sys.h"
 #include "macros.h"
+#include "Sha1.h"
 
-static bool const _fileCacheClearAfterUsage = true; // You need to manually delete cache after usage wit Sha1_clear_cache(), if this is set to false!
+static bool const _fileCacheClearAfterUsage = true; // You need to manually delete cache after usage with Sha1_clear_cache(), if this is set to false!
 static size_t const _fileCacheSize = 16*1024*1024;
 
-static FILE* _filePtr = NULL; // To be set by Sha1_create_from_file() and used in FillBuf().
+static FILE* _filePtr = NULL; // To be set by Sha1_create_from_file() via FillCache() and used in FillBuf().
 static char* _fileCachePtr = NULL;
 static size_t _fileCachePos = SIZE_MAX;                  //
 static size_t _fileCacheLen = SIZE_MAX/*_fileCachePos*/; // Important to be equal (see implementation)!
 static uint8_t _loopBuf[64]; // To be set by FillBuf() multiple times and used in Sha1_create_from_file().
 static bool _endOfData = false; // To be set in FillBuf() and reacted on in Sha1_create_from_file().
 
-static size_t FillCache()
+static bool FillCache()
 {
     bool retVal = false;
 
